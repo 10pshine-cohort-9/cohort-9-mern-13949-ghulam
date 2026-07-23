@@ -11,9 +11,11 @@ export function errorHandler(err, req, res, _next) {
 
   logger.error({ err, status, path: req.originalUrl }, err.message);
 
+  const message = status >= 500 ? 'Internal Server Error' : err.message || 'Internal Server Error';
+
   res.status(status).json({
     error: {
-      message: err.message || 'Internal Server Error',
+      message,
     },
   });
 }
