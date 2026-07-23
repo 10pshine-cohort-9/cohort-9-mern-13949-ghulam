@@ -1,10 +1,6 @@
-const morgan = require('morgan');
+const pinoHttp = require('pino-http');
 const logger = require('../logger/logger');
 
-const stream = {
-  write: (message) => logger.info(message.trim())
-};
-
-const requestLogger = morgan('combined', { stream });
+const requestLogger = pinoHttp({ logger });
 
 module.exports = requestLogger;

@@ -1,13 +1,11 @@
-const winston = require('winston');
+const pino = require('pino');
 
-const logger = winston.createLogger({
+const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  transports: [new winston.transports.Console()]
+  transport:
+    process.env.NODE_ENV === 'development'
+      ? { target: 'pino-pretty', options: { colorize: true } }
+      : undefined
 });
 
 module.exports = logger;
