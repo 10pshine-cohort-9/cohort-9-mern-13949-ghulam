@@ -3,7 +3,7 @@ import client from '../api/client';
 const TOKEN_KEY = 'token';
 
 const register = async ({ firstName, lastName, email, password }) => {
-  const { data } = await client.post('/api/auth/signin', { firstName, lastName, email, password });
+  const { data } = await client.post('/api/auth/signup', { firstName, lastName, email, password });
   localStorage.setItem(TOKEN_KEY, data.token);
   return data;
 };
