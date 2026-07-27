@@ -121,6 +121,19 @@ describe("Notes API", () => {
     }
   });
 
+  it("returns 400 when updating a note with a malformed id", async () => {
+    try {
+      const res = await request(app)
+        .put("/notes/not-a-uuid")
+        .send({ title: "x", content: "y", user_id: userId });
+
+      expect(res.status).to.equal(400);
+      expect(res.body.message).to.equal("Invalid id format.");
+    } catch (err) {
+      withContext("returns 400 when updating a note with a malformed id", err);
+    }
+  });
+
   it("returns 400 when deleting without a user_id", async () => {
     try {
       const res = await request(app).delete(`/notes/${noteId}`).send({});
