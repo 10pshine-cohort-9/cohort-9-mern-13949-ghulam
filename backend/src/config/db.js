@@ -10,6 +10,10 @@ const pool = new Pool({
   connectionTimeoutMillis: Number(process.env.PG_CONNECTION_TIMEOUT_MS) || 5000
 });
 
+pool.on('error', (err) => {
+  logger.error({ err }, 'Unexpected error on idle PostgreSQL client');
+});
+
 const connectDB = async () => {
   try {
     await pool.query('SELECT 1');
