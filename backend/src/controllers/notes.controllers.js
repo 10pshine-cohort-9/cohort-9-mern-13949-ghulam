@@ -1,6 +1,6 @@
 import * as notesServices from "../services/notes.services.js";
 
- const createNote = async (req, res, next) => {
+const createNote = async (req, res, next) => {
   try {
     const { title, content, user_id } = req.body;
 
@@ -22,7 +22,7 @@ import * as notesServices from "../services/notes.services.js";
   }
 };
 
- const getNotes = async (req, res, next) => {
+const getNotes = async (req, res, next) => {
   try {
     const { user_id } = req.params;
 
@@ -44,7 +44,7 @@ import * as notesServices from "../services/notes.services.js";
   }
 };
 
- const getNoteById = async (req, res, next) => {
+const getNoteById = async (req, res, next) => {
   try {
     const { user_id, noteId } = req.params;
 
@@ -65,7 +65,7 @@ import * as notesServices from "../services/notes.services.js";
   }
 };
 
- const updateNote = async (req, res, next) => {
+const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
     const { title, content, user_id } = req.body;
@@ -88,17 +88,18 @@ import * as notesServices from "../services/notes.services.js";
   }
 };
 
- const deleteNote = async (req, res, next) => {
+const deleteNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
+    const { user_id } = req.body;
 
-    if (!noteId) {
+    if (!noteId || !user_id) {
       return res.status(400).json({
-        message: "Note ID is required.",
+        message: "noteId and user_id are required.",
       });
     }
 
-    const note = await notesServices.deleteNote(noteId);
+    const note = await notesServices.deleteNote(noteId, user_id);
 
     return res.status(200).json({
       success: true,
@@ -110,4 +111,4 @@ import * as notesServices from "../services/notes.services.js";
   }
 };
 
-export {createNote, deleteNote, getNotes, getNoteById, updateNote}
+export { createNote, deleteNote, getNotes, getNoteById, updateNote };

@@ -2,10 +2,23 @@ import { randomUUID } from "node:crypto";
 import { pool } from "../config/db.js";
 import HttpError from "../utils/httpError.js";
 
+const INVALID_UUID_CODE = "22P02";
+
+const runQuery = async (text, params) => {
+  try {
+    return await pool.query(text, params);
+  } catch (err) {
+    if (err.code === INVALID_UUID_CODE) {
+      throw new HttpError(400, "Invalid id format.");
+    }
+    throw err;
+  }
+};
+
 const createNote = async (title, content, user_id) => {
   const id = randomUUID();
 
-  const result = await pool.query(
+  const result = await runQuery(
     `
       INSERT INTO notes (id, title, content, user_id)
       VALUES ($1, $2, $3, $4)
@@ -17,14 +30,15 @@ const createNote = async (title, content, user_id) => {
   return result.rows[0];
 };
 
-const deleteNote = async (noteId) => {
-  const result = await pool.query(
+const deleteNote = async (noteId, user_id) => {
+  const result = await runQuery(
     `
       DELETE FROM notes
       WHERE id = $1
+        AND user_id = $2
       RETURNING *;
     `,
-    [noteId],
+    [noteId, user_id],
   );
 
   if (result.rowCount === 0) {
@@ -35,7 +49,7 @@ const deleteNote = async (noteId) => {
 };
 
 const getNotes = async (user_id) => {
-  const result = await pool.query(
+  const result = await runQuery(
     `
       SELECT *
       FROM notes
@@ -49,7 +63,7 @@ const getNotes = async (user_id) => {
 };
 
 const getNoteById = async (user_id, noteId) => {
-  const result = await pool.query(
+  const result = await runQuery(
     `
       SELECT *
       FROM notes
@@ -67,7 +81,7 @@ const getNoteById = async (user_id, noteId) => {
 };
 
 const updateNote = async (noteId, title, content, user_id) => {
-  const result = await pool.query(
+  const result = await runQuery(
     `
       UPDATE notes
       SET
@@ -88,4 +102,4 @@ const updateNote = async (noteId, title, content, user_id) => {
   return result.rows[0];
 };
 
-export {createNote, deleteNote, getNotes, getNoteById, updateNote}
+export { createNote, deleteNote, getNotes, getNoteById, updateNote };

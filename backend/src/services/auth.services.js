@@ -9,6 +9,13 @@ const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
 const signToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+const toUserDTO = (row) => ({
+  id: row.id,
+  firstName: row.first_name,
+  lastName: row.last_name,
+  email: row.email,
+});
+
 const signIn = async ({ firstName, lastName, email, password }) => {
   const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
     email,
@@ -25,12 +32,7 @@ const signIn = async ({ firstName, lastName, email, password }) => {
   );
 
   const row = result.rows[0];
-  const user = {
-    id: row.id,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    email: row.email,
-  };
+  const user = toUserDTO(row);
   const token = signToken(user.id);
 
   return { user, token };
@@ -55,12 +57,7 @@ const login = async ({ email, password }) => {
   const token = signToken(row.id);
 
   return {
-    user: {
-      id: row.id,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      email: row.email,
-    },
+    user: toUserDTO(row),
     token,
   };
 };
