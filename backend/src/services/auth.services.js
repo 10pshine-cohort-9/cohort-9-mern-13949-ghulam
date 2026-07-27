@@ -1,8 +1,8 @@
-const { randomUUID } = require('crypto');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { pool } = require('../config/db');
-const HttpError = require('../utils/httpError');
+import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { pool } from '../config/db.js';
+import HttpError from '../utils/httpError.js';
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
 
@@ -60,4 +60,4 @@ const login = async ({ email, password }) => {
   };
 };
 
-module.exports = { signIn, login };
+export { signIn, login };
