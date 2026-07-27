@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const logger = require('../logger/logger');
+import jwt from 'jsonwebtoken';
+import logger from '../logger/logger.js';
 
 const authMiddleware = (req, res, next) => {
   const header = req.headers.authorization;
@@ -19,4 +19,4 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

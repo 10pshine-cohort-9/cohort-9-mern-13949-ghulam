@@ -1,9 +1,9 @@
-const pinoHttp = require('pino-http');
-const logger = require('../logger/logger');
+import pinoHttp from 'pino-http';
+import logger from '../logger/logger.js';
 
 const requestLogger = pinoHttp({
   logger,
   redact: ['req.headers.authorization', 'req.headers.cookie']
 });
 
-module.exports = requestLogger;
+export default requestLogger;
