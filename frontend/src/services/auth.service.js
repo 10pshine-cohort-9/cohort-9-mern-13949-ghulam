@@ -29,7 +29,15 @@ const getToken = () => localStorage.getItem(TOKEN_KEY);
 
 const getUser = () => {
   const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 };
 
 export default { register, login, logout, getToken, getUser };

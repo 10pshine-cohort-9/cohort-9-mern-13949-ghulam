@@ -2,11 +2,12 @@ import * as notesServices from "../services/notes.services.js";
 
 const createNote = async (req, res, next) => {
   try {
-    const { title, content, user_id } = req.body;
+    const { title, content } = req.body;
+    const user_id = req.user.id;
 
-    if (!title || !content || !user_id) {
+    if (!title || !content) {
       return res.status(400).json({
-        message: "title, content and user_id are required.",
+        message: "title and content are required.",
       });
     }
 
@@ -24,13 +25,7 @@ const createNote = async (req, res, next) => {
 
 const getNotes = async (req, res, next) => {
   try {
-    const { user_id } = req.params;
-
-    if (!user_id) {
-      return res.status(400).json({
-        message: "User ID is required.",
-      });
-    }
+    const user_id = req.user.id;
 
     const notes = await notesServices.getNotes(user_id);
 
@@ -46,11 +41,12 @@ const getNotes = async (req, res, next) => {
 
 const getNoteById = async (req, res, next) => {
   try {
-    const { user_id, noteId } = req.params;
+    const { noteId } = req.params;
+    const user_id = req.user.id;
 
-    if (!user_id || !noteId) {
+    if (!noteId) {
       return res.status(400).json({
-        message: "User ID and Note ID are required.",
+        message: "Note ID is required.",
       });
     }
 
@@ -68,11 +64,12 @@ const getNoteById = async (req, res, next) => {
 const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { title, content, user_id } = req.body;
+    const { title, content } = req.body;
+    const user_id = req.user.id;
 
-    if (!noteId || !title || !content || !user_id) {
+    if (!noteId || !title || !content) {
       return res.status(400).json({
-        message: "noteId, title, content and user_id are required.",
+        message: "noteId, title and content are required.",
       });
     }
 
@@ -91,11 +88,11 @@ const updateNote = async (req, res, next) => {
 const deleteNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { user_id } = req.body;
+    const user_id = req.user.id;
 
-    if (!noteId || !user_id) {
+    if (!noteId) {
       return res.status(400).json({
-        message: "noteId and user_id are required.",
+        message: "Note ID is required.",
       });
     }
 

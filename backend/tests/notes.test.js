@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect } from "chai";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "../src/app.js";
 import { pool } from "../src/config/db.js";
 
@@ -9,9 +10,13 @@ const withContext = (label, err) => {
   throw err;
 };
 
+const tokenFor = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
 describe("Notes API", () => {
   const userId = randomUUID();
   const otherUserId = randomUUID();
+  const authHeader = `Bearer ${tokenFor(userId)}`;
+  const otherAuthHeader = `Bearer ${tokenFor(otherUserId)}`;
   let noteId;
 
   before(async () => {
@@ -34,12 +39,25 @@ describe("Notes API", () => {
     }
   });
 
+  it("returns 401 when no token is provided", async () => {
+    try {
+      const res = await request(app).get("/notes");
+
+      expect(res.status).to.equal(401);
+    } catch (err) {
+      withContext("returns 401 when no token is provided", err);
+    }
+  });
+
   it("returns 400 when required fields are missing", async () => {
     try {
-      const res = await request(app).post("/notes").send({ title: "No content" });
+      const res = await request(app)
+        .post("/notes")
+        .set("Authorization", authHeader)
+        .send({ title: "No content" });
 
       expect(res.status).to.equal(400);
-      expect(res.body.message).to.equal("title, content and user_id are required.");
+      expect(res.body.message).to.equal("title and content are required.");
     } catch (err) {
       withContext("returns 400 when required fields are missing", err);
     }
@@ -49,7 +67,8 @@ describe("Notes API", () => {
     try {
       const res = await request(app)
         .post("/notes")
-        .send({ title: "Test Note", content: "Hello world", user_id: userId });
+        .set("Authorization", authHeader)
+        .send({ title: "Test Note", content: "Hello world" });
 
       expect(res.status).to.equal(201);
       expect(res.body.success).to.equal(true);
@@ -61,21 +80,21 @@ describe("Notes API", () => {
     }
   });
 
-  it("lists notes for a user", async () => {
+  it("lists notes for the authenticated user", async () => {
     try {
-      const res = await request(app).get(`/notes/${userId}`);
+      const res = await request(app).get("/notes").set("Authorization", authHeader);
 
       expect(res.status).to.equal(200);
       expect(res.body.count).to.equal(1);
       expect(res.body.data[0].id).to.equal(noteId);
     } catch (err) {
-      withContext("lists notes for a user", err);
+      withContext("lists notes for the authenticated user", err);
     }
   });
 
   it("gets a note by id", async () => {
     try {
-      const res = await request(app).get(`/notes/${userId}/${noteId}`);
+      const res = await request(app).get(`/notes/${noteId}`).set("Authorization", authHeader);
 
       expect(res.status).to.equal(200);
       expect(res.body.data.id).to.equal(noteId);
@@ -86,7 +105,7 @@ describe("Notes API", () => {
 
   it("returns 404 when fetching a note owned by a different user", async () => {
     try {
-      const res = await request(app).get(`/notes/${otherUserId}/${noteId}`);
+      const res = await request(app).get(`/notes/${noteId}`).set("Authorization", otherAuthHeader);
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.equal("Note not found.");
@@ -99,7 +118,8 @@ describe("Notes API", () => {
     try {
       const res = await request(app)
         .put(`/notes/${noteId}`)
-        .send({ title: "Updated Title", content: "Updated content", user_id: userId });
+        .set("Authorization", authHeader)
+        .send({ title: "Updated Title", content: "Updated content" });
 
       expect(res.status).to.equal(200);
       expect(res.body.data).to.include({ title: "Updated Title", content: "Updated content" });
@@ -112,7 +132,8 @@ describe("Notes API", () => {
     try {
       const res = await request(app)
         .put(`/notes/${randomUUID()}`)
-        .send({ title: "x", content: "y", user_id: userId });
+        .set("Authorization", authHeader)
+        .send({ title: "x", content: "y" });
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.equal("Note not found.");
@@ -125,7 +146,8 @@ describe("Notes API", () => {
     try {
       const res = await request(app)
         .put("/notes/not-a-uuid")
-        .send({ title: "x", content: "y", user_id: userId });
+        .set("Authorization", authHeader)
+        .send({ title: "x", content: "y" });
 
       expect(res.status).to.equal(400);
       expect(res.body.message).to.equal("Invalid id format.");
@@ -134,20 +156,23 @@ describe("Notes API", () => {
     }
   });
 
-  it("returns 400 when deleting without a user_id", async () => {
+  it("returns 404 when updating a note owned by a different user", async () => {
     try {
-      const res = await request(app).delete(`/notes/${noteId}`).send({});
+      const res = await request(app)
+        .put(`/notes/${noteId}`)
+        .set("Authorization", otherAuthHeader)
+        .send({ title: "x", content: "y" });
 
-      expect(res.status).to.equal(400);
-      expect(res.body.message).to.equal("noteId and user_id are required.");
+      expect(res.status).to.equal(404);
+      expect(res.body.message).to.equal("Note not found.");
     } catch (err) {
-      withContext("returns 400 when deleting without a user_id", err);
+      withContext("returns 404 when updating a note owned by a different user", err);
     }
   });
 
   it("returns 404 when deleting a note owned by a different user", async () => {
     try {
-      const res = await request(app).delete(`/notes/${noteId}`).send({ user_id: otherUserId });
+      const res = await request(app).delete(`/notes/${noteId}`).set("Authorization", otherAuthHeader);
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.equal("Note not found.");
@@ -158,7 +183,7 @@ describe("Notes API", () => {
 
   it("deletes a note", async () => {
     try {
-      const res = await request(app).delete(`/notes/${noteId}`).send({ user_id: userId });
+      const res = await request(app).delete(`/notes/${noteId}`).set("Authorization", authHeader);
 
       expect(res.status).to.equal(200);
       expect(res.body.data.id).to.equal(noteId);
@@ -169,7 +194,7 @@ describe("Notes API", () => {
 
   it("returns 404 when deleting a note that no longer exists", async () => {
     try {
-      const res = await request(app).delete(`/notes/${noteId}`).send({ user_id: userId });
+      const res = await request(app).delete(`/notes/${noteId}`).set("Authorization", authHeader);
 
       expect(res.status).to.equal(404);
       expect(res.body.message).to.equal("Note not found.");
