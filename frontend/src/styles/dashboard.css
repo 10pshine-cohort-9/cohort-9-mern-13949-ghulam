@@ -135,3 +135,124 @@
   font-size: 14px;
   color: var(--dash-outline);
 }
+
+.dashboard-loading {
+  color: var(--dash-on-surface-variant);
+}
+
+.dashboard-error {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #ffdad6;
+  color: #ba1a1a;
+  font-size: 14px;
+}
+
+.dashboard-note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: var(--dash-surface);
+  border: 1px solid rgba(195, 198, 215, 0.3);
+  border-radius: 12px;
+}
+
+.dashboard-note-input,
+.dashboard-note-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--dash-outline-variant);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--dash-on-surface);
+}
+
+.dashboard-note-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.dashboard-note-input:focus,
+.dashboard-note-textarea:focus {
+  outline: none;
+  border-color: var(--dash-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.dashboard-note-save {
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  background: var(--dash-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-note-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dashboard-note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: var(--dash-surface);
+  border: 1px solid rgba(195, 198, 215, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-note-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dashboard-note-content {
+  margin: 0;
+  flex: 1;
+  font-size: 14px;
+  color: var(--dash-on-surface-variant);
+  white-space: pre-wrap;
+}
+
+.dashboard-note-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.dashboard-note-edit,
+.dashboard-note-delete {
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.dashboard-note-edit {
+  color: var(--dash-primary);
+}
+
+.dashboard-note-edit:hover {
+  text-decoration: underline;
+}
+
+.dashboard-note-delete {
+  color: var(--dash-outline);
+}
+
+.dashboard-note-delete:hover {
+  color: #ba1a1a;
+}

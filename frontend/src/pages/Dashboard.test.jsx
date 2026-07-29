@@ -1,11 +1,17 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import authService from '../services/auth.service';
+import notesService from '../services/notes.service';
 
 jest.mock('../services/auth.service', () => ({
   __esModule: true,
-  default: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), getToken: jest.fn() }
+  default: { login: jest.fn(), register: jest.fn(), logout: jest.fn(), getToken: jest.fn(), getUser: jest.fn() }
+}));
+
+jest.mock('../services/notes.service', () => ({
+  __esModule: true,
+  default: { getNotes: jest.fn(), createNote: jest.fn(), updateNote: jest.fn(), deleteNote: jest.fn() }
 }));
 
 const mockNavigate = jest.fn();
@@ -14,28 +20,107 @@ jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate
 }));
 
+const renderDashboard = () =>
+  render(
+    <MemoryRouter>
+      <Dashboard />
+    </MemoryRouter>
+  );
+
 beforeEach(() => {
   jest.clearAllMocks();
+  authService.getUser.mockReturnValue({ id: 'user-1' });
+  notesService.getNotes.mockResolvedValue([]);
 });
 
-test('renders the notes heading', () => {
-  render(
-    <MemoryRouter>
-      <Dashboard />
-    </MemoryRouter>
-  );
+test('renders the notes heading', async () => {
+  renderDashboard();
   expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
 });
 
-test('logs out and redirects to login', () => {
-  render(
-    <MemoryRouter>
-      <Dashboard />
-    </MemoryRouter>
-  );
+test('logs out and redirects to login', async () => {
+  renderDashboard();
+  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
 
   fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
   expect(authService.logout).toHaveBeenCalled();
   expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
+});
+
+test('shows an empty state when there are no notes', async () => {
+  renderDashboard();
+
+  expect(await screen.findByText('No notes yet')).toBeInTheDocument();
+});
+
+test('renders notes fetched from the API', async () => {
+  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+
+  renderDashboard();
+
+  expect(await screen.findByText('Groceries')).toBeInTheDocument();
+  expect(screen.getByText('Milk, eggs')).toBeInTheDocument();
+});
+
+test('shows an error message when notes fail to load', async () => {
+  notesService.getNotes.mockRejectedValue({ response: { data: { message: 'Could not load notes.' } } });
+
+  renderDashboard();
+
+  expect(await screen.findByText('Could not load notes.')).toBeInTheDocument();
+});
+
+test('creates a note and adds it to the list', async () => {
+  notesService.createNote.mockResolvedValue({ id: 'n2', title: 'New note', content: 'Body text' });
+
+  renderDashboard();
+  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+
+  fireEvent.click(screen.getByRole('button', { name: '+ New Note' }));
+  fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
+  fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Body text' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
+
+  await waitFor(() =>
+    expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text' })
+  );
+  expect(await screen.findByText('New note')).toBeInTheDocument();
+});
+
+test('edits a note and updates it in the list', async () => {
+  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+  notesService.updateNote.mockResolvedValue({ id: 'n1', title: 'Groceries v2', content: 'Milk, eggs, bread' });
+
+  renderDashboard();
+  await screen.findByText('Groceries');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Edit Groceries' }));
+
+  expect(screen.getByPlaceholderText('Title')).toHaveValue('Groceries');
+  expect(screen.getByPlaceholderText('Write your note...')).toHaveValue('Milk, eggs');
+
+  fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Groceries v2' } });
+  fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Milk, eggs, bread' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Update Note' }));
+
+  await waitFor(() =>
+    expect(notesService.updateNote).toHaveBeenCalledWith('n1', { title: 'Groceries v2', content: 'Milk, eggs, bread' })
+  );
+  expect(await screen.findByText('Groceries v2')).toBeInTheDocument();
+  expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+});
+
+test('deletes a note from the list', async () => {
+  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+  notesService.deleteNote.mockResolvedValue();
+
+  renderDashboard();
+  await screen.findByText('Groceries');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
+
+  await waitFor(() => expect(notesService.deleteNote).toHaveBeenCalledWith('n1'));
+  expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
 });
