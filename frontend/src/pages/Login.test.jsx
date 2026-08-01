@@ -21,6 +21,11 @@ const renderLogin = () =>
     </MemoryRouter>
   );
 
+const withContext = (label, err) => {
+  err.message = `[${label}] ${err.message}`;
+  throw err;
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -48,25 +53,33 @@ test('toggles password visibility', () => {
 });
 
 test('submits credentials and navigates home on success', async () => {
-  authService.login.mockResolvedValueOnce({ user: { id: '1' }, token: 'abc' });
-  renderLogin();
+  try {
+    authService.login.mockResolvedValueOnce({ user: { id: '1' }, token: 'abc' });
+    renderLogin();
 
-  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Log In' }));
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }));
 
-  await waitFor(() => expect(authService.login).toHaveBeenCalledWith({ email: 'jane@example.com', password: 'secret123' }));
-  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
+    await waitFor(() => expect(authService.login).toHaveBeenCalledWith({ email: 'jane@example.com', password: 'secret123' }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
+  } catch (err) {
+    withContext('submits credentials and navigates home on success', err);
+  }
 });
 
 test('shows an error message when login fails', async () => {
-  authService.login.mockRejectedValueOnce({ response: { data: { message: 'invalid credentials' } } });
-  renderLogin();
+  try {
+    authService.login.mockRejectedValueOnce({ response: { data: { message: 'invalid credentials' } } });
+    renderLogin();
 
-  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Log In' }));
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log In' }));
 
-  expect(await screen.findByText('invalid credentials')).toBeInTheDocument();
-  expect(mockNavigate).not.toHaveBeenCalled();
+    expect(await screen.findByText('invalid credentials')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  } catch (err) {
+    withContext('shows an error message when login fails', err);
+  }
 });

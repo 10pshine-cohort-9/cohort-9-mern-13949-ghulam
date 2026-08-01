@@ -21,6 +21,11 @@ const renderSignup = () =>
     </MemoryRouter>
   );
 
+const withContext = (label, err) => {
+  err.message = `[${label}] ${err.message}`;
+  throw err;
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -47,36 +52,44 @@ test('toggles password visibility', () => {
 });
 
 test('submits the form and navigates home on success', async () => {
-  authService.register.mockResolvedValueOnce({ user: { id: '1' }, token: 'abc' });
-  renderSignup();
+  try {
+    authService.register.mockResolvedValueOnce({ user: { id: '1' }, token: 'abc' });
+    renderSignup();
 
-  fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } });
-  fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
 
-  await waitFor(() =>
-    expect(authService.register).toHaveBeenCalledWith({
-      firstName: 'Jane',
-      lastName: 'Doe',
-      email: 'jane@example.com',
-      password: 'secret123'
-    })
-  );
-  await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
+    await waitFor(() =>
+      expect(authService.register).toHaveBeenCalledWith({
+        firstName: 'Jane',
+        lastName: 'Doe',
+        email: 'jane@example.com',
+        password: 'secret123'
+      })
+    );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
+  } catch (err) {
+    withContext('submits the form and navigates home on success', err);
+  }
 });
 
 test('shows an error message when registration fails', async () => {
-  authService.register.mockRejectedValueOnce({ response: { data: { message: 'email already in use' } } });
-  renderSignup();
+  try {
+    authService.register.mockRejectedValueOnce({ response: { data: { message: 'email already in use' } } });
+    renderSignup();
 
-  fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } });
-  fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
-  fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
-  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
+    fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } });
+    fireEvent.change(screen.getByLabelText('Last Name'), { target: { value: 'Doe' } });
+    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign Up' }));
 
-  expect(await screen.findByText('email already in use')).toBeInTheDocument();
-  expect(mockNavigate).not.toHaveBeenCalled();
+    expect(await screen.findByText('email already in use')).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  } catch (err) {
+    withContext('shows an error message when registration fails', err);
+  }
 });
