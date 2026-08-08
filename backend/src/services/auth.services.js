@@ -5,6 +5,7 @@ import { pool } from "../config/db.js";
 import HttpError from "../utils/httpError.js";
 
 const SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
+const UNIQUE_VIOLATION_CODE = "23505";
 
 const signToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -26,10 +27,19 @@ const signUp = async ({ firstName, lastName, email, password }) => {
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const id = randomUUID();
-  const result = await pool.query(
-    "INSERT INTO users (id, first_name, last_name, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email",
-    [id, firstName, lastName, email, passwordHash],
-  );
+
+  let result;
+  try {
+    result = await pool.query(
+      "INSERT INTO users (id, first_name, last_name, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email",
+      [id, firstName, lastName, email, passwordHash],
+    );
+  } catch (err) {
+    if (err.code === UNIQUE_VIOLATION_CODE) {
+      throw new HttpError(409, "email already registered");
+    }
+    throw err;
+  }
 
   const row = result.rows[0];
   const user = toUserDTO(row);
