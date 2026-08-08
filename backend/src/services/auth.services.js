@@ -16,7 +16,7 @@ const toUserDTO = (row) => ({
   email: row.email,
 });
 
-const signIn = async ({ firstName, lastName, email, password }) => {
+const signUp = async ({ firstName, lastName, email, password }) => {
   const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
     email,
   ]);
@@ -62,4 +62,4 @@ const login = async ({ email, password }) => {
   };
 };
 
-export { signIn, login };
+export { signUp, login };

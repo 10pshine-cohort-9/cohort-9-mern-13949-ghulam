@@ -1,6 +1,6 @@
 import * as authService from '../services/auth.services.js';
 
-const signIn = async (req, res, next) => {
+const signUp = async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
 
   if (!firstName || !lastName || !email || !password) {
@@ -8,7 +8,7 @@ const signIn = async (req, res, next) => {
   }
 
   try {
-    const { user, token } = await authService.signIn({ firstName, lastName, email, password });
+    const { user, token } = await authService.signUp({ firstName, lastName, email, password });
     res.status(201).json({ user, token });
   } catch (err) {
     next(err);
@@ -30,4 +30,4 @@ const login = async (req, res, next) => {
   }
 };
 
-export { signIn, login };
+export { signUp, login };
