@@ -1,14 +1,14 @@
 const authService = require('../services/auth.services');
 
 const signIn = async (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: 'name, email and password are required' });
+  if (!firstName || !lastName || !email || !password) {
+    return res.status(400).json({ message: 'firstName, lastName, email and password are required' });
   }
 
   try {
-    const { user, token } = await authService.signIn({ name, email, password });
+    const { user, token } = await authService.signIn({ firstName, lastName, email, password });
     res.status(201).json({ user, token });
   } catch (err) {
     next(err);
