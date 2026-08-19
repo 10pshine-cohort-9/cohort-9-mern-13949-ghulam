@@ -8,7 +8,10 @@ const app = express();
 
 app.disable('x-powered-by');
 
-const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').filter(Boolean);
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
