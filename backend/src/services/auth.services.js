@@ -16,10 +16,18 @@ const signIn = async ({ firstName, lastName, email, password }) => {
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
   const id = randomUUID();
-  const result = await pool.query(
-    'INSERT INTO users (id, first_name, last_name, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email',
-    [id, firstName, lastName, email, passwordHash]
-  );
+  let result;
+  try {
+    result = await pool.query(
+      'INSERT INTO users (id, first_name, last_name, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email',
+      [id, firstName, lastName, email, passwordHash]
+    );
+  } catch (err) {
+    if (err.code === '23505') {
+      throw new HttpError(409, 'email already registered');
+    }
+    throw err;
+  }
 
   const row = result.rows[0];
   const user = { id: row.id, firstName: row.first_name, lastName: row.last_name, email: row.email };
