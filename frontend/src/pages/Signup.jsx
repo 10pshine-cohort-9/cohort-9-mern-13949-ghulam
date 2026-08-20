@@ -21,7 +21,7 @@ const Signup = () => {
       await authService.register({ firstName, lastName, email, password });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not create your account.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,11 @@ const Signup = () => {
 
         <div className="auth-card">
           <form className="auth-form" onSubmit={handleSubmit}>
-            {error && <p className="auth-error">{error}</p>}
+            {error && (
+              <p className="auth-error" role="alert">
+                {error}
+              </p>
+            )}
 
             <div className="auth-field-group">
               <div className="auth-field">

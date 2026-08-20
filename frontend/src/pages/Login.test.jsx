@@ -70,7 +70,7 @@ test('submits credentials and navigates home on success', async () => {
 
 test('shows an error message when login fails', async () => {
   try {
-    authService.login.mockRejectedValueOnce({ response: { data: { message: 'invalid credentials' } } });
+    authService.login.mockRejectedValueOnce(new Error('invalid credentials'));
     renderLogin();
 
     fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'jane@example.com' } });

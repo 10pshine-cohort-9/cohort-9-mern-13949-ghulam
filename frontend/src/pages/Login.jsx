@@ -19,7 +19,7 @@ const Login = () => {
       await authService.login({ email, password });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,11 @@ const Login = () => {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            {error && <p className="auth-error">{error}</p>}
+            {error && (
+              <p className="auth-error" role="alert">
+                {error}
+              </p>
+            )}
 
             <div className="auth-field">
               <label className="auth-label" htmlFor="email">
@@ -62,9 +66,6 @@ const Login = () => {
                 <label className="auth-label" htmlFor="password">
                   Password
                 </label>
-                <a className="auth-link" href="#forgot" onClick={(event) => event.preventDefault()}>
-                  Forgot password?
-                </a>
               </div>
               <div className="auth-input-wrap">
                 <input

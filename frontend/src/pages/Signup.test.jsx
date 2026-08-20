@@ -78,7 +78,7 @@ test('submits the form and navigates home on success', async () => {
 
 test('shows an error message when registration fails', async () => {
   try {
-    authService.register.mockRejectedValueOnce({ response: { data: { message: 'email already in use' } } });
+    authService.register.mockRejectedValueOnce(new Error('email already in use'));
     renderSignup();
 
     fireEvent.change(screen.getByLabelText('First Name'), { target: { value: 'Jane' } });
