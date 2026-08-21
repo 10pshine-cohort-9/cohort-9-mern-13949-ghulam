@@ -2,15 +2,16 @@ import * as notesServices from "../services/notes.services.js";
 
 const createNote = async (req, res, next) => {
   try {
-    const { title, content, user_id } = req.body;
+    const { title, content } = req.body;
+    const userId = req.user.id;
 
-    if (!title || !content || !user_id) {
+    if (!title || !content) {
       return res.status(400).json({
-        message: "title, content and user_id are required.",
+        message: "title and content are required.",
       });
     }
 
-    const note = await notesServices.createNote(title, content, user_id);
+    const note = await notesServices.createNote(title, content, userId);
 
     return res.status(201).json({
       success: true,
@@ -24,15 +25,9 @@ const createNote = async (req, res, next) => {
 
 const getNotes = async (req, res, next) => {
   try {
-    const { user_id } = req.params;
+    const userId = req.user.id;
 
-    if (!user_id) {
-      return res.status(400).json({
-        message: "User ID is required.",
-      });
-    }
-
-    const notes = await notesServices.getNotes(user_id);
+    const notes = await notesServices.getNotes(userId);
 
     return res.status(200).json({
       success: true,
@@ -46,15 +41,16 @@ const getNotes = async (req, res, next) => {
 
 const getNoteById = async (req, res, next) => {
   try {
-    const { user_id, noteId } = req.params;
+    const { noteId } = req.params;
+    const userId = req.user.id;
 
-    if (!user_id || !noteId) {
+    if (!noteId) {
       return res.status(400).json({
-        message: "User ID and Note ID are required.",
+        message: "Note ID is required.",
       });
     }
 
-    const note = await notesServices.getNoteById(user_id, noteId);
+    const note = await notesServices.getNoteById(userId, noteId);
 
     return res.status(200).json({
       success: true,
@@ -68,15 +64,16 @@ const getNoteById = async (req, res, next) => {
 const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { title, content, user_id } = req.body;
+    const { title, content } = req.body;
+    const userId = req.user.id;
 
-    if (!noteId || !title || !content || !user_id) {
+    if (!noteId || !title || !content) {
       return res.status(400).json({
-        message: "noteId, title, content and user_id are required.",
+        message: "noteId, title and content are required.",
       });
     }
 
-    const note = await notesServices.updateNote(noteId, title, content, user_id);
+    const note = await notesServices.updateNote(noteId, title, content, userId);
 
     return res.status(200).json({
       success: true,
@@ -91,15 +88,15 @@ const updateNote = async (req, res, next) => {
 const deleteNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { user_id } = req.body;
+    const userId = req.user.id;
 
-    if (!noteId || !user_id) {
+    if (!noteId) {
       return res.status(400).json({
-        message: "noteId and user_id are required.",
+        message: "noteId is required.",
       });
     }
 
-    const note = await notesServices.deleteNote(noteId, user_id);
+    const note = await notesServices.deleteNote(noteId, userId);
 
     return res.status(200).json({
       success: true,
