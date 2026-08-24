@@ -1,15 +1,16 @@
-const express = require('express');
-const cors = require('cors');
-const requestLogger = require('./middleware/requestLogger');
-const errorHandler = require('./middleware/errorHandler');
-const authRoutes = require('./routes/auth.routes');
+import express from "express";
+import cors from "cors";
+import requestLogger from "./middleware/requestLogger.js";
+import errorHandler from "./middleware/errorHandler.js";
+import authRoutes from "./routes/auth.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
 
 const app = express();
 
-app.disable('x-powered-by');
+app.disable("x-powered-by");
 
-const allowedOrigins = (process.env.CORS_ORIGIN || '')
-  .split(',')
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
@@ -17,12 +18,13 @@ app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 app.use(requestLogger);
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
 });
 
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/notes", notesRoutes);
 
 app.use(errorHandler);
 
-module.exports = app;
+export default app;
