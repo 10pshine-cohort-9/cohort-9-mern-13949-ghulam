@@ -147,7 +147,7 @@ const Dashboard = () => {
       <main className="dashboard-main">
         <div className="dashboard-toolbar">
           <p className="dashboard-subtitle">All your notes in one place.</p>
-          <button type="button" className="dashboard-new-note" onClick={handleToggleForm}>
+          <button type="button" className="dashboard-new-note" onClick={handleToggleForm} disabled={loading}>
             {showForm ? 'Cancel' : '+ New Note'}
           </button>
         </div>

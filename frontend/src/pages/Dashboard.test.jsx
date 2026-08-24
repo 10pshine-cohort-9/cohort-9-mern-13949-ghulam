@@ -27,6 +27,11 @@ const renderDashboard = () =>
     </MemoryRouter>
   );
 
+const withContext = (label, err) => {
+  err.message = `[${label}] ${err.message}`;
+  throw err;
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
   authService.getUser.mockReturnValue({ id: 'user-1' });
@@ -34,93 +39,125 @@ beforeEach(() => {
 });
 
 test('renders the notes heading', async () => {
-  renderDashboard();
-  expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
-  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+  try {
+    renderDashboard();
+    expect(screen.getByRole('heading', { name: 'Notes' })).toBeInTheDocument();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+  } catch (err) {
+    withContext('renders the notes heading', err);
+  }
 });
 
 test('logs out and redirects to login', async () => {
-  renderDashboard();
-  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+  try {
+    renderDashboard();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
 
-  fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
-  expect(authService.logout).toHaveBeenCalled();
-  expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
+    expect(authService.logout).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true });
+  } catch (err) {
+    withContext('logs out and redirects to login', err);
+  }
 });
 
 test('shows an empty state when there are no notes', async () => {
-  renderDashboard();
+  try {
+    renderDashboard();
 
-  expect(await screen.findByText('No notes yet')).toBeInTheDocument();
+    expect(await screen.findByText('No notes yet')).toBeInTheDocument();
+  } catch (err) {
+    withContext('shows an empty state when there are no notes', err);
+  }
 });
 
 test('renders notes fetched from the API', async () => {
-  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
 
-  renderDashboard();
+    renderDashboard();
 
-  expect(await screen.findByText('Groceries')).toBeInTheDocument();
-  expect(screen.getByText('Milk, eggs')).toBeInTheDocument();
+    expect(await screen.findByText('Groceries')).toBeInTheDocument();
+    expect(screen.getByText('Milk, eggs')).toBeInTheDocument();
+  } catch (err) {
+    withContext('renders notes fetched from the API', err);
+  }
 });
 
 test('shows an error message when notes fail to load', async () => {
-  notesService.getNotes.mockRejectedValue({ response: { data: { message: 'Could not load notes.' } } });
+  try {
+    notesService.getNotes.mockRejectedValue({ response: { data: { message: 'Could not load notes.' } } });
 
-  renderDashboard();
+    renderDashboard();
 
-  expect(await screen.findByText('Could not load notes.')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load notes.')).toBeInTheDocument();
+  } catch (err) {
+    withContext('shows an error message when notes fail to load', err);
+  }
 });
 
 test('creates a note and adds it to the list', async () => {
-  notesService.createNote.mockResolvedValue({ id: 'n2', title: 'New note', content: 'Body text' });
+  try {
+    notesService.createNote.mockResolvedValue({ id: 'n2', title: 'New note', content: 'Body text' });
 
-  renderDashboard();
-  await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+    renderDashboard();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
 
-  fireEvent.click(screen.getByRole('button', { name: '+ New Note' }));
-  fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
-  fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Body text' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ New Note' }));
+    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
+    fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Body text' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
 
-  await waitFor(() =>
-    expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text' })
-  );
-  expect(await screen.findByText('New note')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text' })
+    );
+    expect(await screen.findByText('New note')).toBeInTheDocument();
+  } catch (err) {
+    withContext('creates a note and adds it to the list', err);
+  }
 });
 
 test('edits a note and updates it in the list', async () => {
-  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
-  notesService.updateNote.mockResolvedValue({ id: 'n1', title: 'Groceries v2', content: 'Milk, eggs, bread' });
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+    notesService.updateNote.mockResolvedValue({ id: 'n1', title: 'Groceries v2', content: 'Milk, eggs, bread' });
 
-  renderDashboard();
-  await screen.findByText('Groceries');
+    renderDashboard();
+    await screen.findByText('Groceries');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Edit Groceries' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Groceries' }));
 
-  expect(screen.getByPlaceholderText('Title')).toHaveValue('Groceries');
-  expect(screen.getByPlaceholderText('Write your note...')).toHaveValue('Milk, eggs');
+    expect(screen.getByPlaceholderText('Title')).toHaveValue('Groceries');
+    expect(screen.getByPlaceholderText('Write your note...')).toHaveValue('Milk, eggs');
 
-  fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Groceries v2' } });
-  fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Milk, eggs, bread' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Update Note' }));
+    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Groceries v2' } });
+    fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Milk, eggs, bread' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Update Note' }));
 
-  await waitFor(() =>
-    expect(notesService.updateNote).toHaveBeenCalledWith('n1', { title: 'Groceries v2', content: 'Milk, eggs, bread' })
-  );
-  expect(await screen.findByText('Groceries v2')).toBeInTheDocument();
-  expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(notesService.updateNote).toHaveBeenCalledWith('n1', { title: 'Groceries v2', content: 'Milk, eggs, bread' })
+    );
+    expect(await screen.findByText('Groceries v2')).toBeInTheDocument();
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+  } catch (err) {
+    withContext('edits a note and updates it in the list', err);
+  }
 });
 
 test('deletes a note from the list', async () => {
-  notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
-  notesService.deleteNote.mockResolvedValue();
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+    notesService.deleteNote.mockResolvedValue();
 
-  renderDashboard();
-  await screen.findByText('Groceries');
+    renderDashboard();
+    await screen.findByText('Groceries');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
 
-  await waitFor(() => expect(notesService.deleteNote).toHaveBeenCalledWith('n1'));
-  expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    await waitFor(() => expect(notesService.deleteNote).toHaveBeenCalledWith('n1'));
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+  } catch (err) {
+    withContext('deletes a note from the list', err);
+  }
 });
