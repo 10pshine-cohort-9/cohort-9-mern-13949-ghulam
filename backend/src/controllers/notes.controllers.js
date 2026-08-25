@@ -2,7 +2,7 @@ import * as notesServices from "../services/notes.services.js";
 
 const createNote = async (req, res, next) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, color } = req.body;
     const userId = req.user.id;
 
     if (!title || !content) {
@@ -11,7 +11,7 @@ const createNote = async (req, res, next) => {
       });
     }
 
-    const note = await notesServices.createNote(title, content, userId);
+    const note = await notesServices.createNote(title, content, userId, color);
 
     return res.status(201).json({
       success: true,
@@ -64,7 +64,7 @@ const getNoteById = async (req, res, next) => {
 const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const { title, content } = req.body;
+    const { title, content, color } = req.body;
     const userId = req.user.id;
 
     if (!noteId || !title || !content) {
@@ -73,7 +73,7 @@ const updateNote = async (req, res, next) => {
       });
     }
 
-    const note = await notesServices.updateNote(noteId, title, content, userId);
+    const note = await notesServices.updateNote(noteId, title, content, userId, color);
 
     return res.status(200).json({
       success: true,

@@ -15,16 +15,18 @@ const runQuery = async (text, params) => {
   }
 };
 
-const createNote = async (title, content, user_id) => {
+const DEFAULT_NOTE_COLOR = "#c3c6d7";
+
+const createNote = async (title, content, user_id, color) => {
   const id = randomUUID();
 
   const result = await runQuery(
     `
-      INSERT INTO notes (id, title, content, user_id)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO notes (id, title, content, user_id, color)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *;
     `,
-    [id, title, content, user_id],
+    [id, title, content, user_id, color || DEFAULT_NOTE_COLOR],
   );
 
   return result.rows[0];
@@ -80,19 +82,20 @@ const getNoteById = async (user_id, noteId) => {
   return result.rows[0];
 };
 
-const updateNote = async (noteId, title, content, user_id) => {
+const updateNote = async (noteId, title, content, user_id, color) => {
   const result = await runQuery(
     `
       UPDATE notes
       SET
         title = $1,
         content = $2,
+        color = COALESCE($3, color),
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3
-        AND user_id = $4
+      WHERE id = $4
+        AND user_id = $5
       RETURNING *;
     `,
-    [title, content, noteId, user_id],
+    [title, content, color, noteId, user_id],
   );
 
   if (result.rowCount === 0) {
