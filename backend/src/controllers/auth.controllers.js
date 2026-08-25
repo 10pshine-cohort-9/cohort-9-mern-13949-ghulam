@@ -14,15 +14,26 @@ const isValidEmail = (value) => {
     return false;
   }
   const domain = value.slice(atIndex + 1);
-  const dotIndex = domain.indexOf('.');
-  return dotIndex > 0 && dotIndex < domain.length - 1;
+  const labels = domain.split('.');
+  return labels.length > 1 && labels.every((label) => label.length > 0 && !label.startsWith('-') && !label.endsWith('-'));
 };
 
 const signIn = async (req, res, next) => {
-  const firstName = req.body.firstName?.trim();
-  const lastName = req.body.lastName?.trim();
-  const email = req.body.email?.trim();
-  const { password } = req.body;
+  const body = req.body || {};
+
+  if (
+    typeof body.firstName !== 'string' ||
+    typeof body.lastName !== 'string' ||
+    typeof body.email !== 'string' ||
+    typeof body.password !== 'string'
+  ) {
+    return res.status(400).json({ message: 'firstName, lastName, email and password are required' });
+  }
+
+  const firstName = body.firstName.trim();
+  const lastName = body.lastName.trim();
+  const email = body.email.trim();
+  const { password } = body;
 
   if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ message: 'firstName, lastName, email and password are required' });
@@ -49,7 +60,7 @@ const signIn = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
 
   if (!email || !password) {
     return res.status(400).json({ message: 'email and password are required' });

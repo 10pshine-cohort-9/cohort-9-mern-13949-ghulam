@@ -90,7 +90,7 @@ describe("Notes API", () => {
         .send({ title: "Default Color Note", content: "No color given" });
 
       expect(res.status).to.equal(201);
-      expect(res.body.data.color).to.be.a("string").and.not.empty;
+      expect(res.body.data.color).to.equal("#c3c6d7");
 
       await request(app).delete(`/notes/${res.body.data.id}`).set("Authorization", `Bearer ${user.token}`);
     } catch (err) {
