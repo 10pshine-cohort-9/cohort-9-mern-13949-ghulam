@@ -145,6 +145,20 @@ const Dashboard = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [pendingDeleteNote]);
 
+  useEffect(() => {
+    if (!showForm) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        resetForm();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showForm]);
+
   const getSubmitLabel = () => {
     if (saving) {
       return editingNoteId ? 'Updating…' : 'Saving…';
@@ -205,26 +219,47 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {error && <p className="dashboard-error">{error}</p>}
-
-        {showForm && (
-          <form className="dashboard-note-form" onSubmit={handleSubmit}>
-            <input
-              className="dashboard-note-input"
-              placeholder="Title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-            />
-            <RichTextEditor value={content} onChange={setContent} placeholder="Write your note..." />
-            <button type="submit" className="dashboard-note-save" disabled={saving}>
-              {getSubmitLabel()}
-            </button>
-          </form>
-        )}
+        {error && !showForm && <p className="dashboard-error">{error}</p>}
 
         {renderNotes()}
       </main>
+
+      {showForm && (
+        <div className="dashboard-form-overlay" role="presentation" onClick={handleToggleForm}>
+          <div
+            className="dashboard-form-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-form-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="dashboard-form-modal-header">
+              <h2 id="dashboard-form-title" className="dashboard-form-modal-title">
+                {editingNoteId ? 'Edit Note' : 'New Note'}
+              </h2>
+              <button type="button" className="dashboard-form-modal-close" onClick={handleToggleForm} aria-label="Close">
+                ✕
+              </button>
+            </div>
+
+            {error && <p className="dashboard-error">{error}</p>}
+
+            <form className="dashboard-note-form" onSubmit={handleSubmit}>
+              <input
+                className="dashboard-note-input"
+                placeholder="Title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+              />
+              <RichTextEditor value={content} onChange={setContent} placeholder="Write your note..." />
+              <button type="submit" className="dashboard-note-save" disabled={saving}>
+                {getSubmitLabel()}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {activeNote && <NoteDetailModal note={activeNote} onClose={() => setActiveNote(null)} />}
 
