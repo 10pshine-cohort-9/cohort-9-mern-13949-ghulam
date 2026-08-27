@@ -51,6 +51,7 @@ const Dashboard = () => {
     setContent('');
     setEditingNoteId(null);
     setShowForm(false);
+    setError('');
   };
 
   const handleToggleForm = () => {
