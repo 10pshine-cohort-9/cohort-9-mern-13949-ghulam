@@ -33,6 +33,43 @@ describe("Auth API", () => {
       }
     });
 
+    it("returns 400 when the request body is missing", async () => {
+      try {
+        const res = await request(app).post("/api/auth/signup").set("Content-Type", "application/json");
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal("firstName, lastName, email and password are required");
+      } catch (err) {
+        withContext("returns 400 when the request body is missing", err);
+      }
+    });
+
+    it("returns 400 for an email with repeated dots in the domain", async () => {
+      try {
+        const res = await request(app)
+          .post("/api/auth/signup")
+          .send({ firstName: "Auth", lastName: "Tester", email: "user@domain..com", password });
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal("email must be a valid email address");
+      } catch (err) {
+        withContext("returns 400 for an email with repeated dots in the domain", err);
+      }
+    });
+
+    it("returns 400 for an email with a trailing dot in the domain", async () => {
+      try {
+        const res = await request(app)
+          .post("/api/auth/signup")
+          .send({ firstName: "Auth", lastName: "Tester", email: "user@domain.com.", password });
+
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.equal("email must be a valid email address");
+      } catch (err) {
+        withContext("returns 400 for an email with a trailing dot in the domain", err);
+      }
+    });
+
     it("creates a user and returns a token", async () => {
       try {
         const res = await request(app)

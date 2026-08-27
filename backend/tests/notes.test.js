@@ -82,6 +82,46 @@ describe("Notes API", () => {
     }
   });
 
+  it("defaults the note color when none is provided", async () => {
+    try {
+      const res = await request(app)
+        .post("/notes")
+        .set("Authorization", `Bearer ${user.token}`)
+        .send({ title: "Default Color Note", content: "No color given" });
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data.color).to.equal("#c3c6d7");
+
+      await request(app).delete(`/notes/${res.body.data.id}`).set("Authorization", `Bearer ${user.token}`);
+    } catch (err) {
+      withContext("defaults the note color when none is provided", err);
+    }
+  });
+
+  it("creates a note with a custom color and can update it", async () => {
+    try {
+      const createRes = await request(app)
+        .post("/notes")
+        .set("Authorization", `Bearer ${user.token}`)
+        .send({ title: "Colored Note", content: "Has a color", color: "#fca5a5" });
+
+      expect(createRes.status).to.equal(201);
+      expect(createRes.body.data.color).to.equal("#fca5a5");
+
+      const updateRes = await request(app)
+        .put(`/notes/${createRes.body.data.id}`)
+        .set("Authorization", `Bearer ${user.token}`)
+        .send({ title: "Colored Note", content: "Has a color", color: "#93c5fd" });
+
+      expect(updateRes.status).to.equal(200);
+      expect(updateRes.body.data.color).to.equal("#93c5fd");
+
+      await request(app).delete(`/notes/${createRes.body.data.id}`).set("Authorization", `Bearer ${user.token}`);
+    } catch (err) {
+      withContext("creates a note with a custom color and can update it", err);
+    }
+  });
+
   it("lists notes for the authenticated user", async () => {
     try {
       const res = await request(app).get("/notes").set("Authorization", `Bearer ${user.token}`);
