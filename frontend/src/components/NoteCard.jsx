@@ -8,7 +8,7 @@ const NoteCard = ({ note, onDelete, onEdit, onViewDetails }) => {
   const isTruncated = getPlainText(note.content).length > PREVIEW_CHAR_LIMIT;
 
   return (
-    <div className="dashboard-note-card">
+    <div className="dashboard-note-card" style={{ borderLeftColor: note.color }}>
       <h2 className="dashboard-note-title">{note.title}</h2>
       <div
         className={`dashboard-note-content ${isTruncated ? 'is-truncated' : ''}`}
