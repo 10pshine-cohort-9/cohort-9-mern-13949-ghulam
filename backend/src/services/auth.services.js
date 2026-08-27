@@ -70,4 +70,63 @@ const login = async ({ email, password }) => {
   };
 };
 
-export { signIn, login };
+const getUserById = async (userId) => {
+  const result = await pool.query(
+    "SELECT id, first_name, last_name, email FROM users WHERE id = $1",
+    [userId],
+  );
+  const row = result.rows[0];
+  if (!row) {
+    throw new HttpError(404, "user not found");
+  }
+  return toUserDTO(row);
+};
+
+const updateUser = async (userId, { firstName, lastName, email }) => {
+  let result;
+  try {
+    result = await pool.query(
+      "UPDATE users SET first_name = $1, last_name = $2, email = $3 WHERE id = $4 RETURNING id, first_name, last_name, email",
+      [firstName, lastName, email, userId],
+    );
+  } catch (err) {
+    if (err.code === "23505") {
+      throw new HttpError(409, "email already registered");
+    }
+    throw err;
+  }
+
+  const row = result.rows[0];
+  if (!row) {
+    throw new HttpError(404, "user not found");
+  }
+  return toUserDTO(row);
+};
+
+const changePassword = async (userId, { currentPassword, newPassword }) => {
+  const result = await pool.query("SELECT password FROM users WHERE id = $1", [userId]);
+  const row = result.rows[0];
+  if (!row) {
+    throw new HttpError(404, "user not found");
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, row.password);
+  if (!isMatch) {
+    throw new HttpError(401, "invalid credentials");
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await pool.query("UPDATE users SET password = $1 WHERE id = $2", [newPasswordHash, userId]);
+
+  return { message: "password updated successfully" };
+};
+
+const deleteUser = async (userId) => {
+  const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [userId]);
+  if (!result.rows[0]) {
+    throw new HttpError(404, "user not found");
+  }
+  return { message: "account deleted successfully" };
+};
+
+export { signIn, login, getUserById, updateUser, changePassword, deleteUser };
