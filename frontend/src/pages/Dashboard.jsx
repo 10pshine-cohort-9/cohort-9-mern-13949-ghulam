@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import authService from '../services/auth.service';
 import notesService from '../services/notes.service';
 import NoteCard from '../components/NoteCard';
+import NoteDetailModal from '../components/NoteDetailModal';
+import RichTextEditor from '../components/RichTextEditor';
+import { PlusIcon } from '../components/icons';
 import '../styles/dashboard.css';
+
+const isContentEmpty = (html) => DOMPurify.sanitize(html || '', { ALLOWED_TAGS: [] }).trim().length === 0;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +21,8 @@ const Dashboard = () => {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
+  const [activeNote, setActiveNote] = useState(null);
+  const [pendingDeleteNote, setPendingDeleteNote] = useState(null);
 
   const handleLogout = () => {
     authService.logout();
@@ -43,6 +51,7 @@ const Dashboard = () => {
     setContent('');
     setEditingNoteId(null);
     setShowForm(false);
+    setError('');
   };
 
   const handleToggleForm = () => {
@@ -67,6 +76,12 @@ const Dashboard = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (isContentEmpty(content)) {
+      setError('Content is required.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     try {
@@ -98,6 +113,53 @@ const Dashboard = () => {
     }
   };
 
+  const handleRequestDelete = (noteId) => {
+    const note = notes.find((n) => n.id === noteId);
+    if (note) {
+      setPendingDeleteNote(note);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDeleteNote) {
+      return;
+    }
+    handleDelete(pendingDeleteNote.id);
+    setPendingDeleteNote(null);
+  };
+
+  const handleCancelDelete = () => {
+    setPendingDeleteNote(null);
+  };
+
+  useEffect(() => {
+    if (!pendingDeleteNote) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        handleCancelDelete();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [pendingDeleteNote]);
+
+  useEffect(() => {
+    if (!showForm) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        resetForm();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showForm]);
+
   const getSubmitLabel = () => {
     if (saving) {
       return editingNoteId ? 'Updating…' : 'Saving…';
@@ -124,7 +186,7 @@ const Dashboard = () => {
     return (
       <div className="dashboard-notes-grid">
         {notes.map((note) => (
-          <NoteCard key={note.id} note={note} onDelete={handleDelete} onEdit={handleStartEdit} />
+          <NoteCard key={note.id} note={note} onDelete={handleRequestDelete} onEdit={handleStartEdit} onViewDetails={setActiveNote} />
         ))}
       </div>
     );
@@ -148,36 +210,89 @@ const Dashboard = () => {
         <div className="dashboard-toolbar">
           <p className="dashboard-subtitle">All your notes in one place.</p>
           <button type="button" className="dashboard-new-note" onClick={handleToggleForm} disabled={loading}>
-            {showForm ? 'Cancel' : '+ New Note'}
+            {showForm ? (
+              'Cancel'
+            ) : (
+              <>
+                <PlusIcon size={14} /> New Note
+              </>
+            )}
           </button>
         </div>
 
-        {error && <p className="dashboard-error">{error}</p>}
-
-        {showForm && (
-          <form className="dashboard-note-form" onSubmit={handleSubmit}>
-            <input
-              className="dashboard-note-input"
-              placeholder="Title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-            />
-            <textarea
-              className="dashboard-note-textarea"
-              placeholder="Write your note..."
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              required
-            />
-            <button type="submit" className="dashboard-note-save" disabled={saving}>
-              {getSubmitLabel()}
-            </button>
-          </form>
-        )}
+        {error && !showForm && <p className="dashboard-error">{error}</p>}
 
         {renderNotes()}
       </main>
+
+      {showForm && (
+        <div className="dashboard-form-overlay" role="presentation" onClick={handleToggleForm}>
+          <div
+            className="dashboard-form-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dashboard-form-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="dashboard-form-modal-header">
+              <h2 id="dashboard-form-title" className="dashboard-form-modal-title">
+                {editingNoteId ? 'Edit Note' : 'New Note'}
+              </h2>
+              <button type="button" className="dashboard-form-modal-close" onClick={handleToggleForm} aria-label="Close">
+                ✕
+              </button>
+            </div>
+
+            {error && <p className="dashboard-error">{error}</p>}
+
+            <form className="dashboard-note-form" onSubmit={handleSubmit}>
+              <input
+                className="dashboard-note-input"
+                placeholder="Title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+              />
+              <RichTextEditor value={content} onChange={setContent} placeholder="Write your note..." />
+              <button type="submit" className="dashboard-note-save" disabled={saving}>
+                {getSubmitLabel()}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {activeNote && <NoteDetailModal note={activeNote} onClose={() => setActiveNote(null)} />}
+
+      {pendingDeleteNote && (
+        <div className="dashboard-confirm-overlay">
+          <button
+            type="button"
+            className="dashboard-confirm-backdrop"
+            aria-label="Cancel delete"
+            onClick={handleCancelDelete}
+          />
+          <div
+            className="dashboard-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-delete-title"
+          >
+            <p id="confirm-delete-title" className="dashboard-confirm-title">
+              Delete &ldquo;{pendingDeleteNote.title}&rdquo;?
+            </p>
+            <p className="dashboard-confirm-text">This action cannot be undone.</p>
+            <div className="dashboard-confirm-actions">
+              <button type="button" className="dashboard-confirm-cancel" onClick={handleCancelDelete}>
+                Cancel
+              </button>
+              <button type="button" className="dashboard-confirm-delete" onClick={handleConfirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

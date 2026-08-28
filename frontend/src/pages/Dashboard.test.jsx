@@ -14,6 +14,13 @@ jest.mock('../services/notes.service', () => ({
   default: { getNotes: jest.fn(), createNote: jest.fn(), updateNote: jest.fn(), deleteNote: jest.fn() }
 }));
 
+jest.mock('../components/RichTextEditor', () => ({
+  __esModule: true,
+  default: ({ value, onChange, placeholder }) => (
+    <textarea placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
+  )
+}));
+
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
@@ -104,7 +111,7 @@ test('creates a note and adds it to the list', async () => {
     renderDashboard();
     await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
 
-    fireEvent.click(screen.getByRole('button', { name: '+ New Note' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New Note' }));
     fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
     fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Body text' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
@@ -136,7 +143,10 @@ test('edits a note and updates it in the list', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update Note' }));
 
     await waitFor(() =>
-      expect(notesService.updateNote).toHaveBeenCalledWith('n1', { title: 'Groceries v2', content: 'Milk, eggs, bread' })
+      expect(notesService.updateNote).toHaveBeenCalledWith('n1', {
+        title: 'Groceries v2',
+        content: 'Milk, eggs, bread'
+      })
     );
     expect(await screen.findByText('Groceries v2')).toBeInTheDocument();
     expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
@@ -145,7 +155,78 @@ test('edits a note and updates it in the list', async () => {
   }
 });
 
-test('deletes a note from the list', async () => {
+test('blocks submitting a note with empty rich-text content', async () => {
+  try {
+    renderDashboard();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Note' }));
+    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
+    fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: '<p></p>' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
+
+    expect(await screen.findByText('Content is required.')).toBeInTheDocument();
+    expect(notesService.createNote).not.toHaveBeenCalled();
+  } catch (err) {
+    withContext('blocks submitting a note with empty rich-text content', err);
+  }
+});
+
+test('opens and closes the note detail modal via "See more"', async () => {
+  try {
+    const longNote = { id: 'n1', title: 'Long note', content: `<p>${'word '.repeat(60)}</p>` };
+    notesService.getNotes.mockResolvedValue([longNote]);
+
+    renderDashboard();
+    await screen.findByText('Long note');
+
+    fireEvent.click(screen.getByRole('button', { name: 'See more of Long note' }));
+
+    expect(screen.getByRole('dialog', { name: 'Long note' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  } catch (err) {
+    withContext('opens and closes the note detail modal via "See more"', err);
+  }
+});
+
+test('asks for confirmation before deleting a note', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
+
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(notesService.deleteNote).not.toHaveBeenCalled();
+  } catch (err) {
+    withContext('asks for confirmation before deleting a note', err);
+  }
+});
+
+test('cancels deletion without calling the API', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(notesService.deleteNote).not.toHaveBeenCalled();
+    expect(screen.getByText('Groceries')).toBeInTheDocument();
+  } catch (err) {
+    withContext('cancels deletion without calling the API', err);
+  }
+});
+
+test('deletes a note from the list after confirming', async () => {
   try {
     notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
     notesService.deleteNote.mockResolvedValue();
@@ -154,10 +235,13 @@ test('deletes a note from the list', async () => {
     await screen.findByText('Groceries');
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete Groceries' }));
+    expect(notesService.deleteNote).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete', exact: true }));
 
     await waitFor(() => expect(notesService.deleteNote).toHaveBeenCalledWith('n1'));
     expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
   } catch (err) {
-    withContext('deletes a note from the list', err);
+    withContext('deletes a note from the list after confirming', err);
   }
 });
