@@ -79,4 +79,23 @@ const changePassword = async ({ currentPassword, newPassword }) => {
   }
 };
 
-export default { register, login, logout, getToken, getUser, getProfile, updateProfile, changePassword };
+const deleteAccount = async () => {
+  try {
+    const { data } = await client.delete('/api/auth/profile');
+    return data;
+  } catch (err) {
+    throw normalizeError(err);
+  }
+};
+
+export default {
+  register,
+  login,
+  logout,
+  getToken,
+  getUser,
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteAccount
+};

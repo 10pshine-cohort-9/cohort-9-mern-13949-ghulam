@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -181,6 +182,8 @@ const Dashboard = () => {
     return editingNoteId ? 'Update Note' : 'Save Note';
   };
 
+  const filteredNotes = notes.filter((note) => note.title.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+
   const renderNotes = () => {
     if (loading) {
       return <p className="dashboard-loading">Loading notes…</p>;
@@ -197,9 +200,20 @@ const Dashboard = () => {
       );
     }
 
+    if (filteredNotes.length === 0) {
+      return (
+        <div className="dashboard-notes-grid">
+          <div className="dashboard-empty-state">
+            <p className="dashboard-empty-title">No notes found</p>
+            <p className="dashboard-empty-text">No notes match &ldquo;{searchQuery}&rdquo;.</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="dashboard-notes-grid">
-        {notes.map((note) => (
+        {filteredNotes.map((note) => (
           <NoteCard key={note.id} note={note} onDelete={handleRequestDelete} onEdit={handleStartEdit} onViewDetails={setActiveNote} />
         ))}
       </div>
@@ -227,7 +241,15 @@ const Dashboard = () => {
 
       <main className="dashboard-main">
         <div className="dashboard-toolbar">
-          <p className="dashboard-subtitle">All your notes in one place.</p>
+          <div className="dashboard-toolbar-spacer" aria-hidden="true" />
+          <input
+            type="search"
+            className="dashboard-search"
+            placeholder="Search notes by title…"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            aria-label="Search notes by title"
+          />
           <button type="button" className="dashboard-new-note" onClick={handleToggleForm} disabled={loading}>
             {showForm ? (
               'Cancel'

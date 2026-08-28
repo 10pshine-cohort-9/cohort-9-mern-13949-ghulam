@@ -92,6 +92,42 @@ test('renders notes fetched from the API', async () => {
   }
 });
 
+test('filters notes by title as the user searches', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([
+      { id: 'n1', title: 'Groceries', content: 'Milk, eggs' },
+      { id: 'n2', title: 'Work Plan', content: 'Finish the report' }
+    ]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+    expect(screen.getByText('Work Plan')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search notes by title'), { target: { value: 'work' } });
+
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    expect(screen.getByText('Work Plan')).toBeInTheDocument();
+  } catch (err) {
+    withContext('filters notes by title as the user searches', err);
+  }
+});
+
+test('shows a "no notes found" message when the search has no matches', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+
+    fireEvent.change(screen.getByLabelText('Search notes by title'), { target: { value: 'nonexistent' } });
+
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    expect(screen.getByText('No notes found')).toBeInTheDocument();
+  } catch (err) {
+    withContext('shows a "no notes found" message when the search has no matches', err);
+  }
+});
+
 test('shows an error message when notes fail to load', async () => {
   try {
     notesService.getNotes.mockRejectedValue({ response: { data: { message: 'Could not load notes.' } } });
