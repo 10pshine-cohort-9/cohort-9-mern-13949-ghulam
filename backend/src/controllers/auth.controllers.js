@@ -74,4 +74,72 @@ const login = async (req, res, next) => {
   }
 };
 
-export { signIn, login };
+const getUser = async (req, res, next) => {
+  try {
+    const user = await authService.getUserById(req.user.id);
+    res.status(200).json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  const body = req.body || {};
+
+  if (typeof body.firstName !== 'string' || typeof body.lastName !== 'string' || typeof body.email !== 'string') {
+    return res.status(400).json({ message: 'firstName, lastName and email are required' });
+  }
+
+  const firstName = body.firstName.trim();
+  const lastName = body.lastName.trim();
+  const email = body.email.trim();
+
+  if (!firstName || !lastName || !email) {
+    return res.status(400).json({ message: 'firstName, lastName and email are required' });
+  }
+
+  if (firstName.length > MAX_NAME_LENGTH || lastName.length > MAX_NAME_LENGTH) {
+    return res.status(400).json({ message: 'firstName and lastName must be 100 characters or fewer' });
+  }
+
+  if (email.length > MAX_EMAIL_LENGTH || !isValidEmail(email)) {
+    return res.status(400).json({ message: 'email must be a valid email address' });
+  }
+
+  try {
+    const user = await authService.updateUser(req.user.id, { firstName, lastName, email });
+    res.status(200).json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const changePassword = async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body || {};
+
+  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || !currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'currentPassword and newPassword are required' });
+  }
+
+  if (newPassword.length < MIN_PASSWORD_LENGTH || newPassword.length > MAX_PASSWORD_LENGTH) {
+    return res.status(400).json({ message: 'newPassword must be between 8 and 128 characters' });
+  }
+
+  try {
+    const result = await authService.changePassword(req.user.id, { currentPassword, newPassword });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const result = await authService.deleteUser(req.user.id);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { signIn, login, getUser, updateUser, changePassword, deleteUser };
