@@ -5,6 +5,12 @@ const MAX_EMAIL_LENGTH = 254;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 
+/**
+ * Express request after `authMiddleware` has run: `req.user.id` holds the
+ * authenticated user's UUID decoded from the JWT.
+ * @typedef {import('express').Request & { user: { id: string } }} AuthenticatedRequest
+ */
+
 const isValidEmail = (value) => {
   if (/\s/.test(value)) {
     return false;
@@ -18,6 +24,15 @@ const isValidEmail = (value) => {
   return labels.length > 1 && labels.every((label) => label.length > 0 && !label.startsWith('-') && !label.endsWith('-'));
 };
 
+/**
+ * POST /api/auth/signup — validates the body as
+ * `{ firstName: string, lastName: string, email: string, password: string }`
+ * (names <= 100 chars, valid email <= 254 chars, password 8-128 chars),
+ * then responds 201 `{ user: UserDTO, token: string }`.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const signIn = async (req, res, next) => {
   const body = req.body || {};
 
@@ -59,6 +74,14 @@ const signIn = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/auth/login — validates the body as
+ * `{ email: string, password: string }`, then responds 200
+ * `{ user: UserDTO, token: string }`.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const login = async (req, res, next) => {
   const { email, password } = req.body || {};
 
@@ -74,6 +97,13 @@ const login = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/auth/profile — returns the authenticated user as
+ * 200 `{ user: UserDTO }`.
+ * @param {AuthenticatedRequest} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const getUser = async (req, res, next) => {
   try {
     const user = await authService.getUserById(req.user.id);
@@ -83,6 +113,14 @@ const getUser = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/auth/profile — validates the body as
+ * `{ firstName: string, lastName: string, email: string }` (same length/format
+ * rules as signup), then responds 200 `{ user: UserDTO }`.
+ * @param {AuthenticatedRequest} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const updateUser = async (req, res, next) => {
   const body = req.body || {};
 
@@ -114,6 +152,14 @@ const updateUser = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/auth/password — validates the body as
+ * `{ currentPassword: string, newPassword: string }` (new password 8-128 chars),
+ * then responds 200 `{ message: string }`.
+ * @param {AuthenticatedRequest} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const changePassword = async (req, res, next) => {
   const { currentPassword, newPassword } = req.body || {};
 
@@ -133,6 +179,13 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+/**
+ * DELETE /api/auth/profile — permanently deletes the authenticated user's
+ * account. Responds 200 `{ message: string }`.
+ * @param {AuthenticatedRequest} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
 const deleteUser = async (req, res, next) => {
   try {
     const result = await authService.deleteUser(req.user.id);

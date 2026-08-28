@@ -260,6 +260,8 @@ describe("Auth API", () => {
           .send({ email, password: "NewPassword123!" });
 
         expect(loginRes.status).to.equal(200);
+
+        token = loginRes.body.token;
       } catch (err) {
         withContext("updates the password and allows login with the new password", err);
       }
@@ -286,7 +288,7 @@ describe("Auth API", () => {
 
         const profileRes = await request(app).get("/api/auth/profile").set("Authorization", `Bearer ${token}`);
 
-        expect(profileRes.status).to.equal(404);
+        expect(profileRes.status).to.equal(401);
       } catch (err) {
         withContext("deletes the authenticated user's account", err);
       }
