@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import authService from '../services/auth.service';
@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [activeNote, setActiveNote] = useState(null);
   const [pendingDeleteNote, setPendingDeleteNote] = useState(null);
+  const formDialogRef = useRef(null);
 
   const handleLogout = () => {
     authService.logout();
@@ -160,6 +161,17 @@ const Dashboard = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showForm]);
 
+  useEffect(() => {
+    if (!showForm) {
+      return undefined;
+    }
+
+    const dialog = formDialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, [showForm]);
+
+
   const getSubmitLabel = () => {
     if (saving) {
       return editingNoteId ? 'Updating…' : 'Saving…';
@@ -226,14 +238,14 @@ const Dashboard = () => {
       </main>
 
       {showForm && (
-        <div className="dashboard-form-overlay" role="presentation" onClick={handleToggleForm}>
-          <div
-            className="dashboard-form-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="dashboard-form-title"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <dialog
+          ref={formDialogRef}
+          className="dashboard-form-overlay"
+          aria-labelledby="dashboard-form-title"
+          onCancel={(event) => event.preventDefault()}
+        >
+          <button type="button" className="dashboard-form-backdrop" aria-label="Close overlay" onClick={handleToggleForm} />
+          <div className="dashboard-form-modal">
             <div className="dashboard-form-modal-header">
               <h2 id="dashboard-form-title" className="dashboard-form-modal-title">
                 {editingNoteId ? 'Edit Note' : 'New Note'}
@@ -259,7 +271,7 @@ const Dashboard = () => {
               </button>
             </form>
           </div>
-        </div>
+        </dialog>
       )}
 
       {activeNote && <NoteDetailModal note={activeNote} onClose={() => setActiveNote(null)} />}

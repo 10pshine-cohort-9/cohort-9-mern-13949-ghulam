@@ -54,7 +54,7 @@ test('calls onClose when clicking the overlay but not the dialog itself', () => 
   fireEvent.click(screen.getByRole('dialog'));
   expect(handleClose).not.toHaveBeenCalled();
 
-  fireEvent.click(screen.getByRole('presentation'));
+  fireEvent.click(screen.getByRole('button', { name: 'Close overlay' }));
   expect(handleClose).toHaveBeenCalled();
 });
 
