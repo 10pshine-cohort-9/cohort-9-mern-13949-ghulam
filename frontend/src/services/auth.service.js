@@ -23,7 +23,7 @@ const register = async ({ firstName, lastName, email, password }) => {
 
 const login = async ({ email, password }) => {
   try {
-    const { data } = await client.post('/api/auth/login', { email, password });
+    const { data } = await client.post('/api/auth/login', { email, password }, { skipAuthRedirect: true });
     persistAuth(data);
     return data;
   } catch (err) {
@@ -51,4 +51,51 @@ const getUser = () => {
   }
 };
 
-export default { register, login, logout, getToken, getUser };
+const getProfile = async () => {
+  try {
+    const { data } = await client.get('/api/auth/profile');
+    return data.user;
+  } catch (err) {
+    throw normalizeError(err);
+  }
+};
+
+const updateProfile = async ({ firstName, lastName, email }) => {
+  try {
+    const { data } = await client.put('/api/auth/profile', { firstName, lastName, email });
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    return data.user;
+  } catch (err) {
+    throw normalizeError(err);
+  }
+};
+
+const changePassword = async ({ currentPassword, newPassword }) => {
+  try {
+    const { data } = await client.put('/api/auth/password', { currentPassword, newPassword }, { skipAuthRedirect: true });
+    return data;
+  } catch (err) {
+    throw normalizeError(err);
+  }
+};
+
+const deleteAccount = async () => {
+  try {
+    const { data } = await client.delete('/api/auth/profile');
+    return data;
+  } catch (err) {
+    throw normalizeError(err);
+  }
+};
+
+export default {
+  register,
+  login,
+  logout,
+  getToken,
+  getUser,
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteAccount
+};

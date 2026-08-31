@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import authService from '../services/auth.service';
 import notesService from '../services/notes.service';
@@ -11,14 +11,27 @@ import '../styles/dashboard.css';
 
 const isContentEmpty = (html) => DOMPurify.sanitize(html || '', { ALLOWED_TAGS: [] }).trim().length === 0;
 
+const DEFAULT_NOTE_COLOR = '#c3c6d7';
+
+const NOTE_COLORS = [
+  { label: 'Default', value: '#c3c6d7' },
+  { label: 'Yellow', value: '#fef08a' },
+  { label: 'Green', value: '#bbf7d0' },
+  { label: 'Blue', value: '#bfdbfe' },
+  { label: 'Pink', value: '#fbcfe8' },
+  { label: 'Purple', value: '#ddd6fe' }
+];
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [color, setColor] = useState(DEFAULT_NOTE_COLOR);
   const [saving, setSaving] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [activeNote, setActiveNote] = useState(null);
@@ -50,6 +63,7 @@ const Dashboard = () => {
   const resetForm = () => {
     setTitle('');
     setContent('');
+    setColor(DEFAULT_NOTE_COLOR);
     setEditingNoteId(null);
     setShowForm(false);
     setError('');
@@ -71,6 +85,7 @@ const Dashboard = () => {
 
     setTitle(note.title);
     setContent(note.content);
+    setColor(note.color || DEFAULT_NOTE_COLOR);
     setEditingNoteId(noteId);
     setShowForm(true);
   };
@@ -87,10 +102,10 @@ const Dashboard = () => {
     setError('');
     try {
       if (editingNoteId) {
-        const updated = await notesService.updateNote(editingNoteId, { title, content });
+        const updated = await notesService.updateNote(editingNoteId, { title, content, color });
         setNotes((prev) => prev.map((note) => (note.id === editingNoteId ? updated : note)));
       } else {
-        const note = await notesService.createNote({ title, content });
+        const note = await notesService.createNote({ title, content, color });
         setNotes((prev) => [note, ...prev]);
       }
       resetForm();
@@ -179,6 +194,8 @@ const Dashboard = () => {
     return editingNoteId ? 'Update Note' : 'Save Note';
   };
 
+  const filteredNotes = notes.filter((note) => note.title.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+
   const renderNotes = () => {
     if (loading) {
       return <p className="dashboard-loading">Loading notes…</p>;
@@ -195,9 +212,20 @@ const Dashboard = () => {
       );
     }
 
+    if (filteredNotes.length === 0) {
+      return (
+        <div className="dashboard-notes-grid">
+          <div className="dashboard-empty-state">
+            <p className="dashboard-empty-title">No notes found</p>
+            <p className="dashboard-empty-text">No notes match &ldquo;{searchQuery}&rdquo;.</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="dashboard-notes-grid">
-        {notes.map((note) => (
+        {filteredNotes.map((note) => (
           <NoteCard key={note.id} note={note} onDelete={handleRequestDelete} onEdit={handleStartEdit} onViewDetails={setActiveNote} />
         ))}
       </div>
@@ -213,14 +241,27 @@ const Dashboard = () => {
           </span>
           <h1 className="dashboard-title">Notes</h1>
         </div>
-        <button type="button" className="dashboard-logout" onClick={handleLogout}>
-          Log out
-        </button>
+        <div className="dashboard-header-actions">
+          <Link to="/profile" className="dashboard-profile-link">
+            Profile
+          </Link>
+          <button type="button" className="dashboard-logout" onClick={handleLogout}>
+            Log out
+          </button>
+        </div>
       </header>
 
       <main className="dashboard-main">
         <div className="dashboard-toolbar">
-          <p className="dashboard-subtitle">All your notes in one place.</p>
+          <div className="dashboard-toolbar-spacer" aria-hidden="true" />
+          <input
+            type="search"
+            className="dashboard-search"
+            placeholder="Search notes by title…"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            aria-label="Search notes by title"
+          />
           <button type="button" className="dashboard-new-note" onClick={handleToggleForm} disabled={loading}>
             {showForm ? (
               'Cancel'
@@ -266,6 +307,20 @@ const Dashboard = () => {
                 required
               />
               <RichTextEditor value={content} onChange={setContent} placeholder="Write your note..." />
+              <div className="dashboard-color-picker" role="radiogroup" aria-label="Note color">
+                {NOTE_COLORS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`dashboard-color-swatch ${color === option.value ? 'is-selected' : ''}`}
+                    style={{ backgroundColor: option.value }}
+                    onClick={() => setColor(option.value)}
+                    role="radio"
+                    aria-checked={color === option.value}
+                    aria-label={option.label}
+                  />
+                ))}
+              </div>
               <button type="submit" className="dashboard-note-save" disabled={saving}>
                 {getSubmitLabel()}
               </button>

@@ -64,3 +64,10 @@ test('does not show a "See more" button for short notes', () => {
 
   expect(screen.queryByText('See more')).not.toBeInTheDocument();
 });
+
+test('applies the note color to the card border', () => {
+  const coloredNote = { ...note, color: '#bfdbfe' };
+  render(<NoteCard note={coloredNote} onDelete={() => {}} onEdit={() => {}} />);
+
+  expect(screen.getByText('Groceries').closest('.dashboard-note-card')).toHaveStyle({ borderLeftColor: '#bfdbfe' });
+});

@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import authService from './services/auth.service';
 
 const AppRoutes = () => {
@@ -14,6 +15,10 @@ const AppRoutes = () => {
         {
           index: true,
           element: authService.getToken() ? <Dashboard /> : <Navigate to="/login" replace />
+        },
+        {
+          path: 'profile',
+          element: authService.getToken() ? <Profile /> : <Navigate to="/login" replace />
         }
       ]
     },

@@ -92,6 +92,42 @@ test('renders notes fetched from the API', async () => {
   }
 });
 
+test('filters notes by title as the user searches', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([
+      { id: 'n1', title: 'Groceries', content: 'Milk, eggs' },
+      { id: 'n2', title: 'Work Plan', content: 'Finish the report' }
+    ]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+    expect(screen.getByText('Work Plan')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search notes by title'), { target: { value: 'work' } });
+
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    expect(screen.getByText('Work Plan')).toBeInTheDocument();
+  } catch (err) {
+    withContext('filters notes by title as the user searches', err);
+  }
+});
+
+test('shows a "no notes found" message when the search has no matches', async () => {
+  try {
+    notesService.getNotes.mockResolvedValue([{ id: 'n1', title: 'Groceries', content: 'Milk, eggs' }]);
+
+    renderDashboard();
+    await screen.findByText('Groceries');
+
+    fireEvent.change(screen.getByLabelText('Search notes by title'), { target: { value: 'nonexistent' } });
+
+    expect(screen.queryByText('Groceries')).not.toBeInTheDocument();
+    expect(screen.getByText('No notes found')).toBeInTheDocument();
+  } catch (err) {
+    withContext('shows a "no notes found" message when the search has no matches', err);
+  }
+});
+
 test('shows an error message when notes fail to load', async () => {
   try {
     notesService.getNotes.mockRejectedValue({ response: { data: { message: 'Could not load notes.' } } });
@@ -117,11 +153,43 @@ test('creates a note and adds it to the list', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
 
     await waitFor(() =>
-      expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text' })
+      expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text', color: '#c3c6d7' })
     );
     expect(await screen.findByText('New note')).toBeInTheDocument();
   } catch (err) {
     withContext('creates a note and adds it to the list', err);
+  }
+});
+
+test('creates a note with the selected color', async () => {
+  try {
+    notesService.createNote.mockResolvedValue({ id: 'n2', title: 'New note', content: 'Body text', color: '#bfdbfe' });
+
+    renderDashboard();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: 'New Note' }));
+    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'New note' } });
+    fireEvent.change(screen.getByPlaceholderText('Write your note...'), { target: { value: 'Body text' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Blue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save Note' }));
+
+    await waitFor(() =>
+      expect(notesService.createNote).toHaveBeenCalledWith({ title: 'New note', content: 'Body text', color: '#bfdbfe' })
+    );
+  } catch (err) {
+    withContext('creates a note with the selected color', err);
+  }
+});
+
+test('shows a link to the profile page', async () => {
+  try {
+    renderDashboard();
+    await waitFor(() => expect(notesService.getNotes).toHaveBeenCalled());
+
+    expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '/profile');
+  } catch (err) {
+    withContext('shows a link to the profile page', err);
   }
 });
 
@@ -145,7 +213,8 @@ test('edits a note and updates it in the list', async () => {
     await waitFor(() =>
       expect(notesService.updateNote).toHaveBeenCalledWith('n1', {
         title: 'Groceries v2',
-        content: 'Milk, eggs, bread'
+        content: 'Milk, eggs, bread',
+        color: '#c3c6d7'
       })
     );
     expect(await screen.findByText('Groceries v2')).toBeInTheDocument();
