@@ -10,13 +10,13 @@ const getNoteById = async (noteId) => {
   return data.data;
 };
 
-const createNote = async ({ title, content }) => {
-  const { data } = await client.post('/notes', { title, content });
+const createNote = async ({ title, content, color }) => {
+  const { data } = await client.post('/notes', { title, content, color });
   return data.data;
 };
 
-const updateNote = async (noteId, { title, content }) => {
-  const { data } = await client.put(`/notes/${noteId}`, { title, content });
+const updateNote = async (noteId, { title, content, color }) => {
+  const { data } = await client.put(`/notes/${noteId}`, { title, content, color });
   return data.data;
 };
 
