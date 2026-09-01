@@ -39,7 +39,9 @@ const start = async () => {
   });
 };
 
-start().catch((err) => {
+try {
+  await start();
+} catch (err) {
   logger.error({ err }, "Server failed to start");
   process.exit(1);
-});
+}

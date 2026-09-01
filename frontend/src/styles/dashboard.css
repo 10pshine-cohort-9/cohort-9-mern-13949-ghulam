@@ -214,15 +214,32 @@
 .dashboard-form-overlay {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0;
   padding: 16px;
-  background: rgba(15, 23, 42, 0.4);
+  border: none;
+  background: transparent;
   z-index: 20;
 }
 
+.dashboard-form-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.4);
+  cursor: pointer;
+}
+
 .dashboard-form-modal {
+  position: relative;
   width: 100%;
   max-width: 520px;
   max-height: calc(100vh - 32px);

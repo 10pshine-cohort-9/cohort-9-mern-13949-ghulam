@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import paginateHtml from '../lib/paginateHtml';
 import '../styles/noteDetailModal.css';
@@ -7,6 +7,7 @@ const CHARS_PER_PAGE = 800;
 
 const NoteDetailModal = ({ note, onClose }) => {
   const [pageIndex, setPageIndex] = useState(0);
+  const dialogRef = useRef(null);
 
   const pages = useMemo(() => paginateHtml(note.content, CHARS_PER_PAGE), [note.content]);
   const totalPages = pages.length;
@@ -15,6 +16,12 @@ const NoteDetailModal = ({ note, onClose }) => {
   useEffect(() => {
     setPageIndex(0);
   }, [note.id]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -27,14 +34,14 @@ const NoteDetailModal = ({ note, onClose }) => {
   }, [onClose]);
 
   return (
-    <div className="note-modal-overlay" role="presentation" onClick={onClose}>
-      <div
-        className="note-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="note-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <dialog
+      ref={dialogRef}
+      className="note-modal-overlay"
+      aria-labelledby="note-modal-title"
+      onCancel={(event) => event.preventDefault()}
+    >
+      <button type="button" className="note-modal-backdrop" aria-label="Close overlay" onClick={onClose} />
+      <div className="note-modal">
         <header className="note-modal-header">
           <h2 id="note-modal-title" className="note-modal-title">
             {note.title}
@@ -74,7 +81,7 @@ const NoteDetailModal = ({ note, onClose }) => {
           </footer>
         )}
       </div>
-    </div>
+    </dialog>
   );
 };
 

@@ -34,6 +34,8 @@ const FONT_FAMILIES = [
   { label: 'Impact', value: 'Impact, Charcoal, sans-serif' }
 ];
 
+const withActiveClass = (baseClass, isActive) => `${baseClass}${isActive ? ' is-active' : ''}`;
+
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editor = useEditor({
     extensions: [
@@ -140,7 +142,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           <legend className="rte-group-legend">Text style</legend>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('bold') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('bold'))}
             onClick={() => editor.chain().focus().toggleBold().run()}
             aria-label="Bold"
             aria-pressed={editor.isActive('bold')}
@@ -150,7 +152,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('italic') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('italic'))}
             onClick={() => editor.chain().focus().toggleItalic().run()}
             aria-label="Italic"
             aria-pressed={editor.isActive('italic')}
@@ -160,7 +162,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('underline') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('underline'))}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             aria-label="Underline"
             aria-pressed={editor.isActive('underline')}
@@ -170,7 +172,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('strike') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('strike'))}
             onClick={() => editor.chain().focus().toggleStrike().run()}
             aria-label="Strikethrough"
             aria-pressed={editor.isActive('strike')}
@@ -180,7 +182,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('superscript') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('superscript'))}
             onClick={() => editor.chain().focus().toggleSuperscript().run()}
             aria-label="Superscript"
             aria-pressed={editor.isActive('superscript')}
@@ -190,7 +192,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('subscript') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('subscript'))}
             onClick={() => editor.chain().focus().toggleSubscript().run()}
             aria-label="Subscript"
             aria-pressed={editor.isActive('subscript')}
@@ -205,8 +207,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
         <fieldset className="rte-group">
           <legend className="rte-group-legend">Color</legend>
           <label className="rte-button rte-color-trigger" title="Text color — changes the color of the selected text">
-            A
-            <span className="rte-color-bar" style={{ backgroundColor: textColor }} aria-hidden="true" />
+            A<span className="rte-color-bar" style={{ backgroundColor: textColor }} aria-hidden="true" />
             <input
               type="color"
               className="rte-color-input"
@@ -220,7 +221,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
               <button
                 key={color.value}
                 type="button"
-                className={`rte-swatch ${editor.isActive('highlight', { color: color.value }) ? 'is-active' : ''}`}
+                className={withActiveClass('rte-swatch', editor.isActive('highlight', { color: color.value }))}
                 style={{ backgroundColor: color.value }}
                 onClick={() => editor.chain().focus().toggleHighlight({ color: color.value }).run()}
                 aria-label={`Highlight ${color.label}`}
@@ -246,7 +247,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           <legend className="rte-group-legend">Lists and blocks</legend>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('bulletList') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('bulletList'))}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             aria-label="Bullet list"
             aria-pressed={editor.isActive('bulletList')}
@@ -256,7 +257,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('orderedList') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('orderedList'))}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             aria-label="Numbered list"
             aria-pressed={editor.isActive('orderedList')}
@@ -266,7 +267,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('blockquote') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('blockquote'))}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             aria-label="Blockquote"
             aria-pressed={editor.isActive('blockquote')}
@@ -276,7 +277,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('code') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('code'))}
             onClick={() => editor.chain().focus().toggleCode().run()}
             aria-label="Inline code"
             aria-pressed={editor.isActive('code')}
@@ -286,7 +287,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('codeBlock') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('codeBlock'))}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             aria-label="Code block"
             aria-pressed={editor.isActive('codeBlock')}
@@ -296,7 +297,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive('link') ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive('link'))}
             onClick={handleSetLink}
             aria-label="Link"
             aria-pressed={editor.isActive('link')}
@@ -312,7 +313,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           <legend className="rte-group-legend">Alignment</legend>
           <button
             type="button"
-            className={`rte-button ${isLeftAligned ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', isLeftAligned)}
             onClick={() => editor.chain().focus().setTextAlign('left').run()}
             aria-label="Align left"
             aria-pressed={isLeftAligned}
@@ -322,7 +323,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive({ textAlign: 'center' }))}
             onClick={() => editor.chain().focus().setTextAlign('center').run()}
             aria-label="Align center"
             aria-pressed={editor.isActive({ textAlign: 'center' })}
@@ -332,7 +333,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive({ textAlign: 'right' }))}
             onClick={() => editor.chain().focus().setTextAlign('right').run()}
             aria-label="Align right"
             aria-pressed={editor.isActive({ textAlign: 'right' })}
@@ -342,7 +343,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           </button>
           <button
             type="button"
-            className={`rte-button ${editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}`}
+            className={withActiveClass('rte-button', editor.isActive({ textAlign: 'justify' }))}
             onClick={() => editor.chain().focus().setTextAlign('justify').run()}
             aria-label="Justify"
             aria-pressed={editor.isActive({ textAlign: 'justify' })}
