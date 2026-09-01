@@ -21,7 +21,7 @@ A full-stack notes application built with a React (Vite) frontend and a Node.js/
 
 ## Project Structure
 
-```
+```text
 .
 ├── backend/
 │   ├── src/
@@ -57,7 +57,12 @@ A full-stack notes application built with a React (Vite) frontend and a Node.js/
 
 ### 1. Database
 
-Create a database and the two tables the app needs:
+Create the database, then run the following to create the two tables the app needs:
+
+```bash
+createdb notes_db   # or: psql -U postgres -c "CREATE DATABASE notes_db;"
+psql -U postgres -d notes_db
+```
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
